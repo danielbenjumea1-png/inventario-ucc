@@ -28,8 +28,7 @@ async function cargarExcelInicial() {
         document.getElementById('result').innerHTML = '<p style="color: blue;">Inventario inicial cargado desde Excel.</p>';
     } catch (error) {
         console.error('Error al cargar Excel inicial:', error); // Debug
-        document.getElementById('result').innerHTML = '<p style="color: orange;">No se pudo cargar el Excel inicial. Verifica la URL o agrega códigos manualmente. Error: ' + error.message + '</p>';
-        // No bloquea la app: continúa normalmente
+        document.getElementById('result').innerHTML = '<p style="color: orange;
     }
 }
 
