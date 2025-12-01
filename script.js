@@ -7,9 +7,7 @@ let quaggaIniciado = false;
 async function cargarExcelInicial() {
     try {
         console.log('Intentando cargar Excel desde GitHub...'); // Debug
-        const response = await fetch('https://github.com/danielbenjumea1-png/C-digos-inventario/raw/main/inventario%20-%20solo%20codigos.xlsx', { 
-            timeout: 10000 // 10 segundos de timeout
-        });
+        const response = await fetch('https://github.com/danielbenjumea1-png/C-digos-inventario/raw/main/inventario%20-%20solo%20codigos.xlsx');
         console.log('Respuesta del fetch:', response.status); // Debug: Debería ser 200
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
@@ -28,7 +26,8 @@ async function cargarExcelInicial() {
         document.getElementById('result').innerHTML = '<p style="color: blue;">Inventario inicial cargado desde Excel.</p>';
     } catch (error) {
         console.error('Error al cargar Excel inicial:', error); // Debug
-        document.getElementById('result').innerHTML = '<p style="color: orange;
+        document.getElementById('result').innerHTML = '<p style="color: orange;">No se pudo cargar el Excel inicial. Verifica la URL o agrega códigos manualmente. Error: ' + (error.message || error) + '</p>';
+        // No bloquea la app: continúa normalmente
     }
 }
 
@@ -36,7 +35,10 @@ async function cargarExcelInicial() {
 function actualizarMapeo() {
     codigoAFila = {};
     inventario.forEach((item, index) => {
-        codigoAFila[item.codigo] = index;
+        // Normalizar códigos (por si hay espacios)
+        const codigo = (item.codigo || '').toString().trim().toUpperCase();
+        item.codigo = codigo;
+        codigoAFila[codigo] = index;
     });
 }
 
@@ -69,7 +71,9 @@ function iniciarQuagga() {
         }
         Quagga.start();
         quaggaIniciado = true;
-        document.getElementById('camaraIndicador').style.display = 'block';
+        if (document.getElementById('camaraIndicador')) {
+            document.getElementById('camaraIndicador').style.display = 'block';
+        }
         document.getElementById('result').innerHTML = '<p style="color: green;">Cámara iniciada. Escanea un código.</p>';
     });
 
@@ -80,7 +84,11 @@ function iniciarQuagga() {
     });
 }
 
+// === REEMPLAZADA: procesarCodigo marca TODO como "encontrado" ===
 function procesarCodigo(codigo) {
+    codigo = (codigo || '').toString().trim().toUpperCase();
+    if (!codigo) return;
+
     // Si existe → marcar encontrado
     if (codigoAFila[codigo] !== undefined) {
         inventario[codigoAFila[codigo]].estado = 'encontrado';
@@ -114,9 +122,11 @@ function guardarInventario() {
 
 function actualizarTabla() {
     let tbody = document.querySelector('#inventarioTable tbody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     inventario.forEach(item => {
-        let row = `<tr class="${item.estado === 'encontrado' ? 'verde' : ''}"><td>${item.codigo}</td><td>${item.estado}</td></tr>`;
+        let clase = item.estado === 'encontrado' ? 'verde' : '';
+        let row = `<tr class="${clase}"><td>${item.codigo}</td><td>${item.estado}</td></tr>`;
         tbody.innerHTML += row;
     });
 }
@@ -153,30 +163,37 @@ function resetearInventario() {
 }
 
 function mostrarGuia() {
-    document.getElementById('guiaModal').style.display = 'block';
+    const modal = document.getElementById('guiaModal');
+    if (modal) modal.style.display = 'block';
 }
 
 function cerrarGuia() {
-    document.getElementById('guiaModal').style.display = 'none';
+    const modal = document.getElementById('guiaModal');
+    if (modal) modal.style.display = 'none';
 }
 
-// Event listeners
-document.getElementById('guiaBtn').addEventListener('click', mostrarGuia);
-document.getElementById('guiaBtn').addEventListener('touchstart', mostrarGuia);
-document.getElementById('closeGuia').addEventListener('click', cerrarGuia);
-document.getElementById('closeGuia').addEventListener('touchstart', cerrarGuia);
-document.getElementById('iniciarCamaraBtn').addEventListener('click', iniciarQuagga);
-document.getElementById('iniciarCamaraBtn').addEventListener('touchstart', iniciarQuagga);
-document.getElementById('procesarBtn').addEventListener('click', procesarManual);
-document.getElementById('procesarBtn').addEventListener('touchstart', procesarManual);
-document.getElementById('descargarBtn').addEventListener('click', descargarExcel);
-document.getElementById('descargarBtn').addEventListener('touchstart', descargarExcel);
-document.getElementById('subirBtn').addEventListener('click', subirSharePoint);
-document.getElementById('subirBtn').addEventListener('touchstart', subirSharePoint);
-document.getElementById('resetBtn').addEventListener('click', resetearInventario);
-document.getElementById('resetBtn').addEventListener('touchstart', resetearInventario);
+// Event listeners (se asume que los elementos existen)
+const safeAddListener = (id, evt, fn) => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener(evt, fn);
+    }
+};
+
+safeAddListener('guiaBtn', 'click', mostrarGuia);
+safeAddListener('guiaBtn', 'touchstart', mostrarGuia);
+safeAddListener('closeGuia', 'click', cerrarGuia);
+safeAddListener('closeGuia', 'touchstart', cerrarGuia);
+safeAddListener('iniciarCamaraBtn', 'click', iniciarQuagga);
+safeAddListener('iniciarCamaraBtn', 'touchstart', iniciarQuagga);
+safeAddListener('procesarBtn', 'click', procesarManual);
+safeAddListener('procesarBtn', 'touchstart', procesarManual);
+safeAddListener('descargarBtn', 'click', descargarExcel);
+safeAddListener('descargarBtn', 'touchstart', descargarExcel);
+safeAddListener('resetBtn', 'click', resetearInventario);
+safeAddListener('resetBtn', 'touchstart', resetearInventario);
 
 // Cargar al inicio
-cargarExcelInicial();
+cargarExcelInicial().catch(e => console.warn('cargarExcelInicial fallo:', e));
 actualizarTabla();
 
