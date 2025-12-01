@@ -84,7 +84,7 @@ function iniciarQuagga() {
 function procesarCodigo(codigo) {
     if (codigoAFila[codigo] !== undefined) {
         inventario[codigoAFila[codigo]].estado = 'encontrado';
-        document.getElementById('result').innerHTML = `<p style="color: green;">✔ Código ${codigo} encontrado y marcado en verde.</p>`;
+        document.getElementById('result').innerHTML = `<p style="color: green;">✔ Código ${codigo} encontrado.</p>`;
     } 
     guardarInventario();
     actualizarTabla();
@@ -108,7 +108,7 @@ function actualizarTabla() {
     let tbody = document.querySelector('#inventarioTable tbody');
     tbody.innerHTML = '';
     inventario.forEach(item => {
-        let row = `<tr class="${item.estado === 'encontrado' ? 'verde' : item.estado === 'nuevo' ? 'morado' : ''}"><td>${item.codigo}</td><td>${item.estado}</td></tr>`;
+        let row = `<tr class="${item.estado === 'encontrado' ? 'verde' : ''}"><td>${item.codigo}</td><td>${item.estado}</td></tr>`;
         tbody.innerHTML += row;
     });
 }
