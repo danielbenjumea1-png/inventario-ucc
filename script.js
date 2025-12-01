@@ -7,7 +7,7 @@ let quaggaIniciado = false;
 async function cargarExcelInicial() {
     try {
         console.log('Intentando cargar Excel desde GitHub...'); // Debug
-        const response = await fetch('https://raw.githubusercontent.com/danielbenjumea1-png/C-digos-inventario/main/inventario%20-%20solo%20codigos.xlsx', { 
+        const response = await fetch('https://github.com/danielbenjumea1-png/C-digos-inventario/raw/main/inventario%20-%20solo%20codigos.xlsx', { 
             timeout: 10000 // 10 segundos de timeout
         });
         console.log('Respuesta del fetch:', response.status); // Debug: Debería ser 200
