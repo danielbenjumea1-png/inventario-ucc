@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario con Escáner de Códigos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+        #interactive { width: 100%; max-width: 640px; height: 480px; border: 1px solid #ccc; margin: 0 auto; }
+        .verde { background-color: lightgreen; }
+        .morado { background-color: lavender; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        button { margin: 10px; padding: 10px; }
+        input { padding: 8px; width: 200px; }
+    </style>
+    <!-- Librerías externas (CDN para evitar instalación) -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Inventario con Escáner de Códigos de Barras</h1>
+    <div id="interactive"></div>
+    <div id="result"></div>
+    <input type="text" id="codigoManual" placeholder="Ingresa código manualmente (ej. B123456)">
+    <button onclick="procesarManual()">Procesar Manual</button>
+    <button onclick="descargarExcel()">Descargar Excel</button>
+    <button onclick="subirSharePoint()">Subir a SharePoint</button>
+    <table id="inventarioTable">
+        <thead>
+            <tr><th>Código</th><th>Estado</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script src="script.js"></script>
+</body>
+</html>
