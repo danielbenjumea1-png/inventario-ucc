@@ -6,7 +6,7 @@ let quaggaIniciado = false; // Bandera para evitar reiniciar Quagga
 // Función para cargar Excel inicial desde GitHub
 async function cargarExcelInicial() {
     try {
-        const response = await fetch('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/inventario.xlsx'); // Reemplaza con tu URL real
+        const response = await fetch('https://github.com/danielbenjumea1-png/C-digos-inventario/blob/d6013e694561fec70a083c5f28331061140776cb/inventario%20-%20solo%20codigos.xlsx'); // Reemplaza con tu URL real
         if (!response.ok) throw new Error('No se encontró el Excel inicial.');
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
