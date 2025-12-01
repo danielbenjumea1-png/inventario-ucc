@@ -85,11 +85,7 @@ function procesarCodigo(codigo) {
     if (codigoAFila[codigo] !== undefined) {
         inventario[codigoAFila[codigo]].estado = 'encontrado';
         document.getElementById('result').innerHTML = `<p style="color: green;">✔ Código ${codigo} encontrado y marcado en verde.</p>`;
-    } else {
-        inventario.push({ codigo: codigo, estado: 'nuevo' });
-        codigoAFila[codigo] = inventario.length - 1;
-        document.getElementById('result').innerHTML = `<p style="color: purple;">➕ Código nuevo agregado: ${codigo}</p>`;
-    }
+    } 
     guardarInventario();
     actualizarTabla();
 }
