@@ -81,10 +81,19 @@ function iniciarQuagga() {
 }
 
 function procesarCodigo(codigo) {
+    // Si existe → marcar encontrado
     if (codigoAFila[codigo] !== undefined) {
         inventario[codigoAFila[codigo]].estado = 'encontrado';
-        document.getElementById('result').innerHTML = `<p style="color: green;">✔ Código ${codigo} encontrado.</p>`;
     } 
+    // Si NO existe → agregarlo y marcar encontrado
+    else {
+        inventario.push({ codigo: codigo, estado: 'encontrado' });
+        codigoAFila[codigo] = inventario.length - 1;
+    }
+
+    document.getElementById('result').innerHTML =
+        `<p style="color: green;">✔ Código ${codigo} marcado como encontrado.</p>`;
+
     guardarInventario();
     actualizarTabla();
 }
