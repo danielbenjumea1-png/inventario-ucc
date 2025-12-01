@@ -1,7 +1,7 @@
 let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
 let codigoAFila = {};
 let excelInicialCargado = false;
-let quaggaIniciado = false; // Bandera para evitar reiniciar Quagga
+let quaggaIniciado = false;
 
 // Función para cargar Excel inicial desde GitHub
 async function cargarExcelInicial() {
@@ -33,7 +33,7 @@ function actualizarMapeo() {
     });
 }
 
-// Función para iniciar Quagga (llamada manualmente en móvil)
+// Función para iniciar Quagga
 function iniciarQuagga() {
     if (quaggaIniciado) return; // Evitar reinicio
     if (typeof Quagga === 'undefined') {
@@ -45,7 +45,11 @@ function iniciarQuagga() {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#interactive'),
-            constraints: { width: 640, height: 480, facingMode: "environment" }
+            constraints: { 
+                width: { ideal: 640 }, 
+                height: { ideal: 480 }, 
+                facingMode: "environment" 
+            } // Constraints más controlados para evitar expansión
         },
         locator: { patchSize: "medium", halfSample: true },
         numOfWorkers: 2,
@@ -58,6 +62,7 @@ function iniciarQuagga() {
         }
         Quagga.start();
         quaggaIniciado = true;
+        document.getElementById('camaraIndicador').style.display = 'block'; // Muestra indicador
         document.getElementById('result').innerHTML = '<p style="color: green;">Cámara iniciada. Escanea un código.</p>';
     });
 
@@ -143,9 +148,9 @@ function cerrarGuia() {
     document.getElementById('guiaModal').style.display = 'none';
 }
 
-// Event listeners para compatibilidad con touch (móvil)
+// Event listeners
 document.getElementById('guiaBtn').addEventListener('click', mostrarGuia);
-document.getElementById('guiaBtn').addEventListener('touchstart', mostrarGuia); // Para touch
+document.getElementById('guiaBtn').addEventListener('touchstart', mostrarGuia);
 document.getElementById('closeGuia').addEventListener('click', cerrarGuia);
 document.getElementById('closeGuia').addEventListener('touchstart', cerrarGuia);
 document.getElementById('iniciarCamaraBtn').addEventListener('click', iniciarQuagga);
@@ -162,4 +167,3 @@ document.getElementById('resetBtn').addEventListener('touchstart', resetearInven
 // Cargar al inicio
 cargarExcelInicial();
 actualizarTabla();
-
