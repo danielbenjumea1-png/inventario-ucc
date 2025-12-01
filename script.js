@@ -1,11 +1,12 @@
 let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
 let codigoAFila = {};
-let excelInicialCargado = false; // Bandera para saber si se cargó el Excel inicial
+let excelInicialCargado = false;
+let quaggaIniciado = false; // Bandera para evitar reiniciar Quagga
 
-// Función para cargar Excel inicial desde GitHub (si existe)
+// Función para cargar Excel inicial desde GitHub
 async function cargarExcelInicial() {
     try {
-        const response = await fetch('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/inventario.xlsx'); // Reemplaza con tu URL real de GitHub
+        const response = await fetch('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/inventario.xlsx'); // Reemplaza con tu URL real
         if (!response.ok) throw new Error('No se encontró el Excel inicial.');
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -32,8 +33,13 @@ function actualizarMapeo() {
     });
 }
 
-// Verificar Quagga
-if (typeof Quagga !== 'undefined') {
+// Función para iniciar Quagga (llamada manualmente en móvil)
+function iniciarQuagga() {
+    if (quaggaIniciado) return; // Evitar reinicio
+    if (typeof Quagga === 'undefined') {
+        document.getElementById('result').innerHTML = '<p style="color: red;">Error: QuaggaJS no cargó. Verifica internet.</p>';
+        return;
+    }
     Quagga.init({
         inputStream: {
             name: "Live",
@@ -47,10 +53,12 @@ if (typeof Quagga !== 'undefined') {
         locate: true
     }, function(err) {
         if (err) {
-            document.getElementById('result').innerHTML = '<p style="color: red;">Error: No se pudo acceder a la cámara. Permite permisos y recarga.</p>';
+            document.getElementById('result').innerHTML = '<p style="color: red;">Error: No se pudo acceder a la cámara. Permite permisos y toca "Iniciar Cámara" de nuevo.</p>';
             return;
         }
         Quagga.start();
+        quaggaIniciado = true;
+        document.getElementById('result').innerHTML = '<p style="color: green;">Cámara iniciada. Escanea un código.</p>';
     });
 
     Quagga.onDetected(function(result) {
@@ -58,8 +66,6 @@ if (typeof Quagga !== 'undefined') {
         if (!code.startsWith('B') || code.length < 7) return;
         procesarCodigo(code);
     });
-} else {
-    document.getElementById('result').innerHTML = '<p style="color: red;">Error: QuaggaJS no cargó. Verifica internet.</p>';
 }
 
 function procesarCodigo(codigo) {
@@ -124,7 +130,7 @@ function resetearInventario() {
         inventario = [];
         actualizarMapeo();
         actualizarTabla();
-        cargarExcelInicial(); // Recarga el inicial
+        cargarExcelInicial();
         document.getElementById('result').innerHTML = '<p style="color: blue;">Inventario reseteado.</p>';
     }
 }
@@ -137,6 +143,23 @@ function cerrarGuia() {
     document.getElementById('guiaModal').style.display = 'none';
 }
 
+// Event listeners para compatibilidad con touch (móvil)
+document.getElementById('guiaBtn').addEventListener('click', mostrarGuia);
+document.getElementById('guiaBtn').addEventListener('touchstart', mostrarGuia); // Para touch
+document.getElementById('closeGuia').addEventListener('click', cerrarGuia);
+document.getElementById('closeGuia').addEventListener('touchstart', cerrarGuia);
+document.getElementById('iniciarCamaraBtn').addEventListener('click', iniciarQuagga);
+document.getElementById('iniciarCamaraBtn').addEventListener('touchstart', iniciarQuagga);
+document.getElementById('procesarBtn').addEventListener('click', procesarManual);
+document.getElementById('procesarBtn').addEventListener('touchstart', procesarManual);
+document.getElementById('descargarBtn').addEventListener('click', descargarExcel);
+document.getElementById('descargarBtn').addEventListener('touchstart', descargarExcel);
+document.getElementById('subirBtn').addEventListener('click', subirSharePoint);
+document.getElementById('subirBtn').addEventListener('touchstart', subirSharePoint);
+document.getElementById('resetBtn').addEventListener('click', resetearInventario);
+document.getElementById('resetBtn').addEventListener('touchstart', resetearInventario);
+
 // Cargar al inicio
 cargarExcelInicial();
 actualizarTabla();
+
