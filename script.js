@@ -1,65 +1,72 @@
 let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
 let codigoAFila = {};
+let excelInicialCargado = false; // Bandera para saber si se cargó el Excel inicial
+
+// Función para cargar Excel inicial desde GitHub (si existe)
+async function cargarExcelInicial() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/inventario.xlsx'); // Reemplaza con tu URL real de GitHub
+        if (!response.ok) throw new Error('No se encontró el Excel inicial.');
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(worksheet);
+        inventario = data.map(item => ({ codigo: item.Codigo || item.codigo, estado: 'pendiente' })); // Asume columna "Codigo"
+        localStorage.setItem('inventario', JSON.stringify(inventario));
+        actualizarMapeo();
+        actualizarTabla();
+        excelInicialCargado = true;
+        document.getElementById('result').innerHTML = '<p style="color: blue;">Inventario inicial cargado desde Excel.</p>';
+    } catch (error) {
+        console.log('No se pudo cargar Excel inicial:', error);
+        document.getElementById('result').innerHTML = '<p style="color: orange;">No se encontró inventario inicial. Agrega códigos manualmente o sube el Excel a GitHub.</p>';
+    }
+}
 
 // Inicializar mapeo
-inventario.forEach((item, index) => {
-    codigoAFila[item.codigo] = index;
-});
+function actualizarMapeo() {
+    codigoAFila = {};
+    inventario.forEach((item, index) => {
+        codigoAFila[item.codigo] = index;
+    });
+}
 
-// Verificar si Quagga está disponible
+// Verificar Quagga
 if (typeof Quagga !== 'undefined') {
-    // Inicializar QuaggaJS
     Quagga.init({
         inputStream: {
             name: "Live",
             type: "LiveStream",
             target: document.querySelector('#interactive'),
-            constraints: {
-                width: 640,
-                height: 480,
-                facingMode: "environment" // Usar cámara trasera en móvil
-            }
+            constraints: { width: 640, height: 480, facingMode: "environment" }
         },
-        locator: {
-            patchSize: "medium",
-            halfSample: true
-        },
+        locator: { patchSize: "medium", halfSample: true },
         numOfWorkers: 2,
-        decoder: {
-            readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"] // Tipos comunes de códigos de barras
-        },
+        decoder: { readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"] },
         locate: true
     }, function(err) {
         if (err) {
-            console.log('Error al inicializar Quagga:', err);
-            document.getElementById('result').innerHTML = '<p style="color: red;">Error: No se pudo acceder a la cámara. Asegúrate de permitir permisos.</p>';
+            document.getElementById('result').innerHTML = '<p style="color: red;">Error: No se pudo acceder a la cámara. Permite permisos y recarga.</p>';
             return;
         }
         Quagga.start();
-        console.log('Quagga iniciado correctamente.');
     });
 
-    // Manejar detección
     Quagga.onDetected(function(result) {
-        let code = result.codeResult.code;
-        code = code.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Limpiar y convertir a mayúsculas
-
-        // Filtrar códigos que empiecen con B y tengan longitud adecuada
+        let code = result.codeResult.code.toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (!code.startsWith('B') || code.length < 7) return;
-
         procesarCodigo(code);
     });
 } else {
-    document.getElementById('result').innerHTML = '<p style="color: red;">Error: QuaggaJS no se cargó. Verifica tu conexión a internet.</p>';
+    document.getElementById('result').innerHTML = '<p style="color: red;">Error: QuaggaJS no cargó. Verifica internet.</p>';
 }
 
 function procesarCodigo(codigo) {
     if (codigoAFila[codigo] !== undefined) {
-        // Marcar como encontrado (verde)
         inventario[codigoAFila[codigo]].estado = 'encontrado';
         document.getElementById('result').innerHTML = `<p style="color: green;">✔ Código ${codigo} encontrado y marcado en verde.</p>`;
     } else {
-        // Agregar nuevo (morado)
         inventario.push({ codigo: codigo, estado: 'nuevo' });
         codigoAFila[codigo] = inventario.length - 1;
         document.getElementById('result').innerHTML = `<p style="color: purple;">➕ Código nuevo agregado: ${codigo}</p>`;
@@ -70,25 +77,23 @@ function procesarCodigo(codigo) {
 
 function procesarManual() {
     let codigo = document.getElementById('codigoManual').value.trim().toUpperCase();
-    if (codigo) {
-        procesarCodigo(codigo);
-        document.getElementById('codigoManual').value = '';
-    } else {
-        alert('Por favor, ingresa un código válido.');
+    if (!codigo) {
+        alert('Ingresa un código válido.');
+        return;
     }
+    procesarCodigo(codigo);
+    document.getElementById('codigoManual').value = '';
 }
 
 function guardarInventario() {
     localStorage.setItem('inventario', JSON.stringify(inventario));
-    // Crear "backup" guardando una copia en localStorage con timestamp
-    localStorage.setItem('inventario_backup_' + Date.now(), JSON.stringify(inventario));
 }
 
 function actualizarTabla() {
     let tbody = document.querySelector('#inventarioTable tbody');
     tbody.innerHTML = '';
     inventario.forEach(item => {
-        let row = `<tr class="${item.estado === 'encontrado' ? 'verde' : 'morado'}"><td>${item.codigo}</td><td>${item.estado}</td></tr>`;
+        let row = `<tr class="${item.estado === 'encontrado' ? 'verde' : item.estado === 'nuevo' ? 'morado' : ''}"><td>${item.codigo}</td><td>${item.estado}</td></tr>`;
         tbody.innerHTML += row;
     });
 }
@@ -109,11 +114,29 @@ function subirSharePoint() {
         alert('No hay datos para subir.');
         return;
     }
-    // Descargar Excel automáticamente
     descargarExcel();
-    // Mostrar instrucciones para subida manual
-    alert('Excel descargado automáticamente. Para subir a SharePoint:\n\n1. Abre este enlace en una nueva pestaña: https://ucceduco-my.sharepoint.com/:x:/r/personal/daniel_benjumea_ucc_edu_co/Documents/inventario%20-%20solo%20codigos.xlsx?d=wdb1f92c8b2f246599c69a9b22ccf2ac6&csf=1&web=1&e=34a0mU\n\n2. Edita el archivo en línea y pega/reemplaza los datos del Excel descargado.\n\n3. Guarda los cambios.');
+    alert('Excel descargado. Súbelo manualmente a: https://ucceduco-my.sharepoint.com/:x:/r/personal/daniel_benjumea_ucc_edu_co/Documents/inventario%20-%20solo%20codigos.xlsx?d=wdb1f92c8b2f246599c69a9b22ccf2ac6&csf=1&web=1&e=34a0mU');
 }
 
-// Inicializar tabla al cargar
+function resetearInventario() {
+    if (confirm('¿Seguro que quieres resetear el inventario? Se perderán cambios no guardados.')) {
+        localStorage.removeItem('inventario');
+        inventario = [];
+        actualizarMapeo();
+        actualizarTabla();
+        cargarExcelInicial(); // Recarga el inicial
+        document.getElementById('result').innerHTML = '<p style="color: blue;">Inventario reseteado.</p>';
+    }
+}
+
+function mostrarGuia() {
+    document.getElementById('guiaModal').style.display = 'block';
+}
+
+function cerrarGuia() {
+    document.getElementById('guiaModal').style.display = 'none';
+}
+
+// Cargar al inicio
+cargarExcelInicial();
 actualizarTabla();
