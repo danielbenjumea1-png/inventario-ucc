@@ -3,25 +3,33 @@ let codigoAFila = {};
 let excelInicialCargado = false;
 let quaggaIniciado = false;
 
-// Función para cargar Excel inicial desde GitHub
+// Función para cargar Excel inicial desde GitHub (con mejor manejo de errores)
 async function cargarExcelInicial() {
     try {
-        const response = await fetch('https://raw.githubusercontent.com/danielbenjumea1-png/C-digos-inventario/main/inventario%20-%20solo%20codigos.xlsx'); // Reemplaza con tu URL real
-        if (!response.ok) throw new Error('No se encontró el Excel inicial.');
+        console.log('Intentando cargar Excel desde GitHub...'); // Debug
+        const response = await fetch('https://raw.githubusercontent.com/danielbenjumea1-png/C-digos-inventario/main/inventario%20-%20solo%20codigos.xlsx', { 
+            timeout: 10000 // 10 segundos de timeout
+        });
+        console.log('Respuesta del fetch:', response.status); // Debug: Debería ser 200
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+        }
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(worksheet);
-        inventario = data.map(item => ({ codigo: item.Codigo || item.codigo, estado: 'pendiente' })); // Asume columna "Codigo"
+        console.log('Datos cargados del Excel:', data); // Debug
+        inventario = data.map(item => ({ codigo: item.Codigo || item.codigo || item.Código, estado: 'pendiente' })); // Soporta variaciones de columna
         localStorage.setItem('inventario', JSON.stringify(inventario));
         actualizarMapeo();
         actualizarTabla();
         excelInicialCargado = true;
         document.getElementById('result').innerHTML = '<p style="color: blue;">Inventario inicial cargado desde Excel.</p>';
     } catch (error) {
-        console.log('No se pudo cargar Excel inicial:', error);
-        document.getElementById('result').innerHTML = '<p style="color: orange;">No se encontró inventario inicial. Agrega códigos manualmente o sube el Excel a GitHub.</p>';
+        console.error('Error al cargar Excel inicial:', error); // Debug
+        document.getElementById('result').innerHTML = '<p style="color: orange;">No se pudo cargar el Excel inicial. Verifica la URL o agrega códigos manualmente. Error: ' + error.message + '</p>';
+        // No bloquea la app: continúa normalmente
     }
 }
 
@@ -35,7 +43,7 @@ function actualizarMapeo() {
 
 // Función para iniciar Quagga
 function iniciarQuagga() {
-    if (quaggaIniciado) return; // Evitar reinicio
+    if (quaggaIniciado) return;
     if (typeof Quagga === 'undefined') {
         document.getElementById('result').innerHTML = '<p style="color: red;">Error: QuaggaJS no cargó. Verifica internet.</p>';
         return;
@@ -49,7 +57,7 @@ function iniciarQuagga() {
                 width: { ideal: 640 }, 
                 height: { ideal: 480 }, 
                 facingMode: "environment" 
-            } // Constraints más controlados para evitar expansión
+            }
         },
         locator: { patchSize: "medium", halfSample: true },
         numOfWorkers: 2,
@@ -62,7 +70,7 @@ function iniciarQuagga() {
         }
         Quagga.start();
         quaggaIniciado = true;
-        document.getElementById('camaraIndicador').style.display = 'block'; // Muestra indicador
+        document.getElementById('camaraIndicador').style.display = 'block';
         document.getElementById('result').innerHTML = '<p style="color: green;">Cámara iniciada. Escanea un código.</p>';
     });
 
@@ -167,3 +175,4 @@ document.getElementById('resetBtn').addEventListener('touchstart', resetearInven
 // Cargar al inicio
 cargarExcelInicial();
 actualizarTabla();
+
