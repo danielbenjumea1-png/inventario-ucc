@@ -206,37 +206,6 @@ function safeAddListener(id, evt, fn) {
     el.addEventListener(evt, fn);
 }
 
-// ---------- MENU TRES PUNTOS (RESET INVENTARIO) ----------
-document.addEventListener('DOMContentLoaded', () => {
-    const menuBtn = document.getElementById('menuBtn');
-    const menuDropdown = document.getElementById('menuDropdown');
-    const chkReset = document.getElementById('chkResetInventario');
-
-    if (!menuBtn || !menuDropdown || !chkReset) return;
-
-    // abrir / cerrar menú
-    menuBtn.addEventListener('click', () => {
-        menuDropdown.style.display =
-            menuDropdown.style.display === 'block' ? 'none' : 'block';
-    });
-
-    // acción del checkbox
-    chkReset.addEventListener('change', function () {
-        if (this.checked) {
-            resetearInventario();
-            this.checked = false;
-            menuDropdown.style.display = 'none';
-        }
-    });
-
-    // cerrar menú al hacer clic fuera
-    document.addEventListener('click', (e) => {
-        if (!menuDropdown.contains(e.target) && e.target !== menuBtn) {
-            menuDropdown.style.display = 'none';
-        }
-    });
-});
-
 // botones
 safeAddListener('guiaBtn', 'click', mostrarGuia);
 safeAddListener('guiaBtn', 'touchstart', mostrarGuia);
