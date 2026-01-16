@@ -5,7 +5,7 @@ let codigoAFila = {};
 let excelInicialCargado = false;
 let quaggaIniciado = false;
 
-// ---------- CARGA EXCEL INICIAL ----------
+// ---------- CARGA EXCEL INICIAL ---------- SOLO USAR SI ES NECESARIO, DESHABILITADA TEMPORALMENTE
 async function cargarExcelInicial() {
     try {
         console.log('Intentando cargar Excel desde GitHub...');
@@ -84,7 +84,7 @@ function iniciarQuagga() {
                 facingMode: "environment"
             }
         },
-        locator: { patchSize: "medium", halfSample: true },
+        locator: { patchSize: "small", halfSample: true },
         numOfWorkers: 2,
         decoder: { readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"] },
         locate: true
@@ -114,7 +114,7 @@ function iniciarQuagga() {
     });
 }
 
-// ---------- PROCESO DE CÓDIGO (marcar TODO como "encontrado") ----------
+// ---------- PROCESO DE CÓDIGO (marcar TODO como "encontrado") ---------- PUEDE MODIFICARSE DEPENDIENDO DE LA SUBIDA DEl "EXCEL INICIAL"
 function procesarCodigo(codigo) {
     codigo = (codigo || '').toString().trim().toUpperCase();
     if (!codigo) return;
@@ -123,7 +123,7 @@ function procesarCodigo(codigo) {
         // existe en inventario: marcar encontrado
         inventario[codigoAFila[codigo]].estado = 'encontrado';
     } else {
-        // NO existe: agregar y marcar encontrado (ya no hay "nuevo")
+        // NO existe: agregar y marcar encontrado (ya no hay "nuevo") PUEDE MODIFICARSE A ESTADO "NUEVO o PERDIDO" DEPENDIENDO DE LA NECESIDAD
         inventario.push({ codigo: codigo, estado: 'encontrado' });
         codigoAFila[codigo] = inventario.length - 1;
     }
